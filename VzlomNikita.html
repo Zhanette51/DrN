@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Поздравление с Днем Рождения</title>
     <style>
         * {
@@ -10,6 +10,7 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Courier New', monospace;
+            -webkit-tap-highlight-color: transparent;
         }
         
         body {
@@ -21,6 +22,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            touch-action: manipulation;
         }
         
         #startScreen {
@@ -35,6 +37,7 @@
             align-items: center;
             z-index: 100;
             flex-direction: column;
+            padding: 20px;
         }
         
         #startButton {
@@ -48,9 +51,11 @@
             text-transform: uppercase;
             letter-spacing: 3px;
             margin-bottom: 20px;
+            min-width: 200px;
+            min-height: 60px;
         }
         
-        #startButton:hover {
+        #startButton:hover, #startButton:active {
             background: #0f0;
             color: #000;
             box-shadow: 0 0 20px #0f0;
@@ -63,26 +68,31 @@
             width: 100%;
             height: 100%;
             z-index: 1;
+            display: block;
         }
         
         #messageContainer {
             position: relative;
             z-index: 10;
-            width: 80%;
+            width: 90%;
             max-width: 800px;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.85);
             border: 1px solid #0f0;
             box-shadow: 0 0 20px #0f0;
             display: none;
             margin-top: 20px;
+            max-height: 80vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .message {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             opacity: 0;
             transform: translateY(20px);
             transition: opacity 1s, transform 1s;
+            word-wrap: break-word;
         }
         
         .message.visible {
@@ -93,9 +103,10 @@
         .typing {
             overflow: hidden;
             border-right: 2px solid #0f0;
-            white-space: nowrap;
+            white-space: normal;
             margin: 0 auto;
             animation: blink-caret 0.7s step-end infinite;
+            word-break: break-word;
         }
         
         @keyframes blink-caret {
@@ -106,15 +117,15 @@
         h1 {
             color: #0f0;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             text-shadow: 0 0 10px #0f0;
-            font-size: 36px;
+            font-size: 28px;
         }
         
         p {
-            line-height: 1.6;
+            line-height: 1.5;
             margin-bottom: 15px;
-            font-size: 18px;
+            font-size: 16px;
         }
         
         #fadeOverlay {
@@ -136,6 +147,47 @@
             text-align: center;
             margin-top: 10px;
             opacity: 0.7;
+            padding: 0 10px;
+        }
+        
+        /* Медиа-запросы для мобильных устройств */
+        @media (max-width: 768px) {
+            #startButton {
+                font-size: 20px;
+                padding: 12px 24px;
+                min-width: 180px;
+                min-height: 50px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            p {
+                font-size: 14px;
+            }
+            
+            #messageContainer {
+                padding: 10px;
+                width: 95%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #startButton {
+                font-size: 18px;
+                padding: 10px 20px;
+                min-width: 160px;
+                min-height: 45px;
+            }
+            
+            h1 {
+                font-size: 22px;
+            }
+            
+            p {
+                font-size: 13px;
+            }
         }
     </style>
 </head>
@@ -165,25 +217,38 @@
     <div id="fadeOverlay"></div>
 
     <script>
+        // Проверка мобильного устройства
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
         // Эффект матрицы
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
         
         // Установка размеров canvas
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        function setCanvasSize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        
+        setCanvasSize();
         
         // Настройки матрицы
         const chars = "0123456789ABCDEF";
         const charArray = chars.split("");
-        const fontSize = 14;
-        const columns = canvas.width / fontSize;
+        const fontSize = isMobile ? 10 : 14;
+        let columns = Math.ceil(canvas.width / fontSize);
         
         // Массив для отслеживания позиции Y каждого столбца
-        const drops = [];
-        for (let i = 0; i < columns; i++) {
-            drops[i] = Math.floor(Math.random() * canvas.height / fontSize);
+        let drops = [];
+        
+        function initDrops() {
+            drops = [];
+            for (let i = 0; i < columns; i++) {
+                drops[i] = Math.floor(Math.random() * canvas.height / fontSize);
+            }
         }
+        
+        initDrops();
         
         // Функция отрисовки матрицы
         function drawMatrix() {
@@ -216,9 +281,10 @@
         
         // Запуск матрицы
         let matrixInterval;
+        let matrixSpeed = isMobile ? 50 : 35;
         
         function startMatrix() {
-            matrixInterval = setInterval(drawMatrix, 35);
+            matrixInterval = setInterval(drawMatrix, matrixSpeed);
         }
         
         function stopMatrix() {
@@ -270,7 +336,9 @@
                     const msgElement = document.getElementById('msg' + (currentMessage + 1));
                     msgElement.classList.add('visible');
                     
-                    typeWriter(msgElement, messages[currentMessage], 50, function() {
+                    const typingSpeed = isMobile ? 70 : 50;
+                    
+                    typeWriter(msgElement, messages[currentMessage], typingSpeed, function() {
                         setTimeout(showNextMessage, 1000);
                     });
                     
@@ -331,15 +399,24 @@
         
         // Обработчик изменения размера окна
         window.addEventListener('resize', function() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            setCanvasSize();
             
             // Пересоздаем массив капель для нового размера
-            const newColumns = canvas.width / fontSize;
-            drops.length = 0;
-            for (let i = 0; i < newColumns; i++) {
-                drops[i] = Math.floor(Math.random() * canvas.height / fontSize);
-            }
+            columns = Math.ceil(canvas.width / fontSize);
+            initDrops();
+        });
+        
+        // Предотвращение стандартных действий жестов на мобильных устройствах
+        document.addEventListener('gesturestart', function(e) {
+            e.preventDefault();
+        });
+        
+        document.addEventListener('gesturechange', function(e) {
+            e.preventDefault();
+        });
+        
+        document.addEventListener('gestureend', function(e) {
+            e.preventDefault();
         });
     </script>
 </body>
