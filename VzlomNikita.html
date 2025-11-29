@@ -61,6 +61,17 @@
             box-shadow: 0 0 20px #0f0;
         }
         
+        #simpleStart {
+            background: transparent;
+            border: 1px solid #0f0;
+            color: #0f0;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: none;
+        }
+        
         canvas {
             position: absolute;
             top: 0;
@@ -194,6 +205,7 @@
 <body>
     <div id="startScreen">
         <button id="startButton">Начать</button>
+        <button id="simpleStart">Запуск без эффектов</button>
         <div class="restart-note">Нажмите кнопку для начала просмотра</div>
     </div>
     
@@ -224,6 +236,11 @@
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
         
+        // Проверка поддержки Canvas
+        if (!canvas.getContext) {
+            document.getElementById('simpleStart').style.display = 'block';
+        }
+        
         // Установка размеров canvas
         function setCanvasSize() {
             canvas.width = window.innerWidth;
@@ -253,15 +270,22 @@
         // Функция отрисовки матрицы
         function drawMatrix() {
             // Полупрозрачный черный фон для эффекта следа
-            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            if (isMobile) {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+            } else {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            }
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
             // Цвет символов
             ctx.fillStyle = "#0f0";
             ctx.font = fontSize + "px monospace";
             
+            // Уменьшим количество обрабатываемых столбцов на мобильных
+            const maxColumns = isMobile ? Math.min(columns, 50) : columns;
+            
             // Отрисовка символов
-            for (let i = 0; i < drops.length; i++) {
+            for (let i = 0; i < maxColumns; i++) {
                 // Случайный символ
                 const text = charArray[Math.floor(Math.random() * charArray.length)];
                 
@@ -284,11 +308,21 @@
         let matrixSpeed = isMobile ? 50 : 35;
         
         function startMatrix() {
-            matrixInterval = setInterval(drawMatrix, matrixSpeed);
+            try {
+                stopMatrix(); // Останавливаем предыдущий интервал
+                matrixInterval = setInterval(drawMatrix, matrixSpeed);
+                return true;
+            } catch (error) {
+                console.error('Matrix error:', error);
+                return false;
+            }
         }
         
         function stopMatrix() {
-            clearInterval(matrixInterval);
+            if (matrixInterval) {
+                clearInterval(matrixInterval);
+                matrixInterval = null;
+            }
         }
         
         // Функция для анимации печати текста
@@ -313,14 +347,14 @@
         
         // Сообщения для поздравления
         const messages = [
-            "сәлам",
-            "с днём рождения",
-            "туган көнең белән",
-            "что тебе пожелать? Уверена, что у тебя и так всё есть",
-            "может, вернуться в прошлое и купить биток?... Если изобрету машину времени, обязательно отправлю об этом аську",
-            "хорошо, а сейчас просто желаю покорять бОльшие высоты, если сам захочешь",
-            "и не упустить момент. Обычно, когда мы чего-то хотим, либо нет ресурса, либо - времени. Пусть у тебя будет всё здесь и сейчас, без откладывания на потом.",
-            "туган көнең белән!",
+            "Сәлам,",
+            "С днём рождения!",
+            "(Туган көнең белән)",
+            "Что тебе пожелать? Уверена, что у тебя и так всё есть",
+            "Может, вернуться в прошлое и купить биток?... Если изобрету машину времени, обязательно отправлю об этом аську",
+            "Хорошо, а сейчас просто желаю покорять бОльшие высоты, если сам захочешь...",
+            "И не упустить момент. Обычно, когда мы чего-то хотим, либо нет ресурса, либо - времени. Пусть у тебя будет всё здесь и сейчас, без откладывания на потом.",
+            "Туган көнең белән!",
             "P.S. в целях безопасности не переходите по незнакомым ссылкам во избежании фишинга :)"
         ];
         
@@ -385,16 +419,45 @@
             }, 3000);
         }
         
-        // Обработчик кнопки "Начать"
-        document.getElementById('startButton').addEventListener('click', function() {
+        // Основная функция запуска презентации
+        function startPresentation() {
             // Скрываем начальный экран
             document.getElementById('startScreen').style.display = 'none';
             
-            // Запускаем матрицу
-            startMatrix();
+            // Пытаемся запустить матрицу
+            const matrixStarted = startMatrix();
+            
+            // Если матрица не запустилась, показываем альтернативную кнопку в следующий раз
+            if (!matrixStarted) {
+                document.getElementById('simpleStart').style.display = 'block';
+            }
             
             // Показываем сообщения через небольшую задержку
             setTimeout(showMessages, 1000);
+        }
+        
+        // Функция запуска без эффектов
+        function startSimple() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('messageContainer').style.display = 'block';
+            showMessages();
+        }
+        
+        // Обработчики событий
+        const startButton = document.getElementById('startButton');
+        const simpleButton = document.getElementById('simpleStart');
+        
+        // Обработчики для всех типов устройств
+        startButton.addEventListener('click', startPresentation);
+        startButton.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            startPresentation();
+        });
+        
+        simpleButton.addEventListener('click', startSimple);
+        simpleButton.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            startSimple();
         });
         
         // Обработчик изменения размера окна
@@ -404,6 +467,27 @@
             // Пересоздаем массив капель для нового размера
             columns = Math.ceil(canvas.width / fontSize);
             initDrops();
+        });
+        
+        // Обработчик изменения ориентации
+        window.addEventListener('orientationchange', function() {
+            setTimeout(function() {
+                setCanvasSize();
+                initDrops();
+            }, 100);
+        });
+        
+        // Принудительная инициализация при загрузке
+        window.addEventListener('load', function() {
+            setCanvasSize();
+            initDrops();
+            
+            // Показать альтернативную кнопку через 3 секунды, если основной клик не сработал
+            setTimeout(() => {
+                if (document.getElementById('startScreen').style.display !== 'none') {
+                    document.getElementById('simpleStart').style.display = 'block';
+                }
+            }, 3000);
         });
         
         // Предотвращение стандартных действий жестов на мобильных устройствах
