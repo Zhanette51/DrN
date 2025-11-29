@@ -60,6 +60,7 @@
             box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
             position: relative;
             overflow: hidden;
+            z-index: 100;
         }
 
         .start-btn:hover {
@@ -144,6 +145,7 @@
             background: linear-gradient(45deg, #ffd93d, #ffa726);
             border-radius: 50%;
             box-shadow: 0 0 10px rgba(255, 217, 61, 0.5);
+            z-index: 10;
         }
 
         /* Экран с иконками */
@@ -152,6 +154,7 @@
             display: none;
             position: relative;
             overflow: hidden;
+            opacity: 1 !important;
         }
 
         .icons-container {
@@ -257,25 +260,25 @@
     <!-- Экран с иконками -->
     <div id="icons-screen" class="screen">
         <div class="icons-container">
-            <div class="social-icon social-icon-1" onclick="showMessage(0)">
+            <div class="social-icon social-icon-1" onclick="showIconMessage(0)">
                 <div class="icon-content">
                     сәлам<br>с днём рождения
                 </div>
             </div>
-            <div class="social-icon social-icon-2" onclick="showMessage(1)">
+            <div class="social-icon social-icon-2" onclick="showIconMessage(1)">
                 <div class="icon-content">
                     туган көнең белән<br>
                     <span class="highlight">что тебе пожелать?</span><br>
                     Уверена, что у тебя и так всё есть
                 </div>
             </div>
-            <div class="social-icon social-icon-3" onclick="showMessage(2)">
+            <div class="social-icon social-icon-3" onclick="showIconMessage(2)">
                 <div class="icon-content">
                     <span class="highlight">Может, вернуться в прошлое и купить биток?</span><br><br>
                     Если изобрету машину времени, обязательно отправлю об этом аську
                 </div>
             </div>
-            <div class="social-icon social-icon-4" onclick="showMessage(3)">
+            <div class="social-icon social-icon-4" onclick="showIconMessage(3)">
                 <div class="icon-content">
                     <span class="highlight">Хорошо, а сейчас просто желаю</span><br><br>
                     покорять бОльшие высоты, если сам захочешь<br><br>
@@ -347,20 +350,24 @@
             }
         }
 
-        // Показать сообщение с анимацией
+        // Показать сообщение на основном экране
         function showMessage(id, delay) {
             setTimeout(() => {
                 const element = document.getElementById(id);
-                element.style.opacity = 1;
-                element.style.transform = id === 'message3' ? 'scaleY(-1)' : 'translateY(0)';
+                if (element) {
+                    element.style.opacity = 1;
+                    element.style.transform = id === 'message3' ? 'scaleY(-1)' : 'translateY(0)';
+                }
             }, delay);
         }
 
         // Показать сообщение в иконке
-        function showMessage(iconIndex) {
+        function showIconMessage(iconIndex) {
             const icons = document.querySelectorAll('.social-icon');
             icons.forEach(icon => icon.classList.remove('active'));
-            icons[iconIndex].classList.add('active');
+            if (icons[iconIndex]) {
+                icons[iconIndex].classList.add('active');
+            }
         }
 
         // Показать экран с иконками
@@ -368,7 +375,7 @@
             const mainScreen = document.getElementById('main-screen');
             const iconsScreen = document.getElementById('icons-screen');
             
-            // Затемнение экрана
+            // Затемнение основного экрана
             mainScreen.style.transition = 'opacity 2s';
             mainScreen.style.opacity = 0;
 
@@ -380,9 +387,9 @@
                 setTimeout(() => {
                     iconsScreen.classList.add('icons-appear');
                     
-                    // Автоматически показываем первое сообщение через 2 секунды
-                    setTimeout(() => showMessage(0), 2000);
-                }, 500);
+                    // Автоматически показываем первое сообщение через 1 секунду
+                    setTimeout(() => showIconMessage(0), 1000);
+                }, 100);
             }, 2000);
         }
 
@@ -390,6 +397,11 @@
         function startAnimation() {
             const startScreen = document.getElementById('start-screen');
             const mainScreen = document.getElementById('main-screen');
+            
+            // Отключаем кнопку, чтобы избежать повторных нажатий
+            const button = document.querySelector('.start-btn');
+            button.style.pointerEvents = 'none';
+            button.style.opacity = '0.7';
             
             // Анимация песка
             createSandParticles();
@@ -401,6 +413,7 @@
                 setTimeout(() => {
                     startScreen.style.display = 'none';
                     mainScreen.style.display = 'flex';
+                    mainScreen.style.opacity = 1;
                     
                     // Показ сообщений
                     showMessage('message1', 500);
@@ -416,6 +429,11 @@
         // Инициализация при загрузке
         window.addEventListener('load', () => {
             createStars();
+        });
+
+        // Добавляем обработчик ошибок для отладки
+        window.addEventListener('error', (e) => {
+            console.error('Ошибка:', e.error);
         });
     </script>
 </body>
