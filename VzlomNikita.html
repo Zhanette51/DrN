@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Поздравление с Днем Рождения</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+        
+        body {
+            background: #000;
+            color: #0f0;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            flex-direction: column;
+        }
+        
+        #startButton {
+            background: transparent;
+            border: 2px solid #0f0;
+            color: #0f0;
+            padding: 15px 30px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+        }
+        
+        #startButton:hover {
+            background: #0f0;
+            color: #000;
+            box-shadow: 0 0 20px #0f0;
+        }
+        
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        #messageContainer {
+            position: relative;
+            z-index: 10;
+            width: 80%;
+            max-width: 800px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #0f0;
+            box-shadow: 0 0 20px #0f0;
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .message {
+            margin-bottom: 30px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s, transform 1s;
+        }
+        
+        .message.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .typing {
+            overflow: hidden;
+            border-right: 2px solid #0f0;
+            white-space: nowrap;
+            margin: 0 auto;
+            animation: blink-caret 0.7s step-end infinite;
+        }
+        
+        @keyframes blink-caret {
+            from, to { border-color: transparent; }
+            50% { border-color: #0f0; }
+        }
+        
+        h1 {
+            color: #0f0;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px #0f0;
+            font-size: 36px;
+        }
+        
+        p {
+            line-height: 1.6;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        #fadeOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            opacity: 0;
+            z-index: 1000;
+            pointer-events: none;
+            transition: opacity 3s;
+        }
+        
+        .restart-note {
+            color: #0f0;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 10px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div id="startScreen">
+        <button id="startButton">Начать</button>
+        <div class="restart-note">Нажмите кнопку для начала просмотра</div>
+    </div>
+    
+    <canvas id="matrixCanvas"></canvas>
+    
+    <div id="messageContainer">
+        <h1>Поздравление</h1>
+        <div id="messages">
+            <div class="message" id="msg1"></div>
+            <div class="message" id="msg2"></div>
+            <div class="message" id="msg3"></div>
+            <div class="message" id="msg4"></div>
+            <div class="message" id="msg5"></div>
+            <div class="message" id="msg6"></div>
+            <div class="message" id="msg7"></div>
+            <div class="message" id="msg8"></div>
+            <div class="message" id="msg9"></div>
+        </div>
+    </div>
+    
+    <div id="fadeOverlay"></div>
+
+    <script>
+        // Эффект матрицы
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Установка размеров canvas
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // Настройки матрицы
+        const chars = "0123456789ABCDEF";
+        const charArray = chars.split("");
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        
+        // Массив для отслеживания позиции Y каждого столбца
+        const drops = [];
+        for (let i = 0; i < columns; i++) {
+            drops[i] = Math.floor(Math.random() * canvas.height / fontSize);
+        }
+        
+        // Функция отрисовки матрицы
+        function drawMatrix() {
+            // Полупрозрачный черный фон для эффекта следа
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Цвет символов
+            ctx.fillStyle = "#0f0";
+            ctx.font = fontSize + "px monospace";
+            
+            // Отрисовка символов
+            for (let i = 0; i < drops.length; i++) {
+                // Случайный символ
+                const text = charArray[Math.floor(Math.random() * charArray.length)];
+                
+                // Отрисовка символа
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                
+                // Возврат капли в начало при достижении низа экрана
+                // Случайный шанс возврата для создания эффекта "капель"
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                
+                // Увеличение позиции Y
+                drops[i]++;
+            }
+        }
+        
+        // Запуск матрицы
+        let matrixInterval;
+        
+        function startMatrix() {
+            matrixInterval = setInterval(drawMatrix, 35);
+        }
+        
+        function stopMatrix() {
+            clearInterval(matrixInterval);
+        }
+        
+        // Функция для анимации печати текста
+        function typeWriter(element, text, speed, callback) {
+            let i = 0;
+            element.innerHTML = '';
+            element.classList.add('typing');
+            
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                } else {
+                    element.classList.remove('typing');
+                    if (callback) callback();
+                }
+            }
+            
+            type();
+        }
+        
+        // Сообщения для поздравления
+        const messages = [
+            "сәлам",
+            "с днём рождения",
+            "туган көнең белән",
+            "что тебе пожелать? Уверена, что у тебя и так всё есть",
+            "может, вернуться в прошлое и купить биток?... Если изобрету машину времени, обязательно отправлю об этом аську",
+            "хорошо, а сейчас просто желаю покорять бОльшие высоты, если сам захочешь",
+            "и не упустить момент. Обычно, когда мы чего-то хотим, либо нет ресурса, либо - времени. Пусть у тебя будет всё здесь и сейчас, без откладывания на потом.",
+            "туган көнең белән!",
+            "P.S. в целях безопасности не переходите по незнакомым ссылкам во избежании фишинга :)"
+        ];
+        
+        // Функция для показа сообщений
+        function showMessages() {
+            const messageContainer = document.getElementById('messageContainer');
+            messageContainer.style.display = 'block';
+            
+            let currentMessage = 0;
+            
+            function showNextMessage() {
+                if (currentMessage < messages.length) {
+                    const msgElement = document.getElementById('msg' + (currentMessage + 1));
+                    msgElement.classList.add('visible');
+                    
+                    typeWriter(msgElement, messages[currentMessage], 50, function() {
+                        setTimeout(showNextMessage, 1000);
+                    });
+                    
+                    currentMessage++;
+                } else {
+                    // Все сообщения показаны, запускаем затемнение и возврат к началу
+                    setTimeout(returnToStart, 3000);
+                }
+            }
+            
+            // Начинаем показ сообщений через небольшую паузу
+            setTimeout(showNextMessage, 500);
+        }
+        
+        // Функция затемнения и возврата к началу
+        function returnToStart() {
+            const fadeOverlay = document.getElementById('fadeOverlay');
+            
+            // Плавное затемнение экрана
+            fadeOverlay.style.opacity = '1';
+            
+            // После завершения затемнения возвращаемся к начальному экрану
+            setTimeout(function() {
+                // Останавливаем матрицу
+                stopMatrix();
+                
+                // Скрываем сообщения
+                document.getElementById('messageContainer').style.display = 'none';
+                
+                // Сбрасываем все сообщения
+                const messageElements = document.querySelectorAll('.message');
+                messageElements.forEach(msg => {
+                    msg.classList.remove('visible');
+                    msg.innerHTML = '';
+                });
+                
+                // Показываем начальный экран
+                document.getElementById('startScreen').style.display = 'flex';
+                
+                // Плавное осветление экрана
+                setTimeout(function() {
+                    fadeOverlay.style.opacity = '0';
+                }, 500);
+            }, 3000);
+        }
+        
+        // Обработчик кнопки "Начать"
+        document.getElementById('startButton').addEventListener('click', function() {
+            // Скрываем начальный экран
+            document.getElementById('startScreen').style.display = 'none';
+            
+            // Запускаем матрицу
+            startMatrix();
+            
+            // Показываем сообщения через небольшую задержку
+            setTimeout(showMessages, 1000);
+        });
+        
+        // Обработчик изменения размера окна
+        window.addEventListener('resize', function() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Пересоздаем массив капель для нового размера
+            const newColumns = canvas.width / fontSize;
+            drops.length = 0;
+            for (let i = 0; i < newColumns; i++) {
+                drops[i] = Math.floor(Math.random() * canvas.height / fontSize);
+            }
+        });
+    </script>
+</body>
+</html>
