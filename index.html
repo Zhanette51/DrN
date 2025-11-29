@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>С Днем Рождения!</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        #start-screen {
+            background: #000;
+        }
+
+        #main-screen {
+            background: #0a1931;
+            display: none;
+        }
+
+        #brick-screen {
+            background: linear-gradient(45deg, #8B4513, #A0522D);
+            display: none;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: center;
+        }
+
+        .brick {
+            width: 100px;
+            height: 50px;
+            background: #CD5C5C;
+            margin: 2px;
+            border: 1px solid #8B0000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 20px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+        }
+
+        .message {
+            color: white;
+            text-align: center;
+            margin: 10px;
+            opacity: 0;
+            position: absolute;
+        }
+
+        .reflection {
+            transform: scaleY(-1);
+            opacity: 0.3;
+        }
+
+        .sand-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #ffd700;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div id="start-screen" class="screen">
+        <button onclick="startAnimation()">нажми</button>
+    </div>
+
+    <div id="main-screen" class="screen">
+        <div id="message1" class="message" style="top: 20%;">сәлам</div>
+        <div id="message2" class="message" style="top: 40%;">с днём рождения</div>
+        <div id="message3" class="message reflection" style="top: 45%;">туган көнең белән</div>
+    </div>
+
+    <div id="brick-screen" class="screen">
+        <div id="final-message" style="color: white; text-align: center; max-width: 80%; opacity: 0;"></div>
+    </div>
+
+    <script>
+        function startAnimation() {
+            const startScreen = document.getElementById('start-screen');
+            const mainScreen = document.getElementById('main-screen');
+            
+            // Создаем частицы песка
+            for (let i = 0; i < 150; i++) {
+                createParticle(startScreen);
+            }
+
+            // Запускаем основные анимации
+            setTimeout(() => {
+                startScreen.style.display = 'none';
+                mainScreen.style.display = 'flex';
+                
+                showMessage('message1', 500);
+                showMessage('message2', 1500);
+                showMessage('message3', 1500);
+                
+                setTimeout(showBrickWall, 3000);
+            }, 2000);
+        }
+
+        function createParticle(container) {
+            const particle = document.createElement('div');
+            particle.className = 'sand-particle';
+            particle.style.left = Math.random() * 100 + 'vw';
+            particle.style.animation = `fall ${Math.random() * 2 + 1}s linear forwards`;
+            container.appendChild(particle);
+
+            // Добавляем CSS-анимацию
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fall {
+                    to {
+                        transform: translateY(100vh) rotate(${Math.random() * 360}deg);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        function showMessage(id, delay) {
+            setTimeout(() => {
+                const element = document.getElementById(id);
+                element.style.transition = 'opacity 1s';
+                element.style.opacity = 1;
+            }, delay);
+        }
+
+        function showBrickWall() {
+            const mainScreen = document.getElementById('main-screen');
+            const brickScreen = document.getElementById('brick-screen');
+            
+            // Затемнение экрана
+            mainScreen.style.transition = 'opacity 2s';
+            mainScreen.style.opacity = 0;
+
+            setTimeout(() => {
+                mainScreen.style.display = 'none';
+                brickScreen.style.display = 'flex';
+                
+                // Создаем кирпичи
+                createBricks();
+                
+                // Показываем текст
+                setTimeout(showFinalText, 1000);
+            }, 2000);
+        }
+
+        function createBricks() {
+            const container = document.getElementById('brick-screen');
+            const bricksCount = Math.floor(window.innerWidth / 104) * Math.floor(window.innerHeight / 54);
+
+            for (let i = 0; i < bricksCount; i++) {
+                const brick = document.createElement('div');
+                brick.className = 'brick';
+                container.appendChild(brick);
+                
+                setTimeout(() => {
+                    brick.style.opacity = 1;
+                }, i * 10);
+            }
+        }
+
+        function showFinalText() {
+            const finalText = document.getElementById('final-message');
+            const messages = [
+                "Что тебе пожелать? Уверена, что у тебя и так всё есть",
+                "Может, вернуться в прошлое и купить биток?...",
+                "Если изобрету машину времени, обязательно отправлю об этом аську.",
+                "Хорошо, а сейчас просто желаю покорять бОльшие высоты, если сам захочешь",
+                "И не упустить момент. Обычно, когда мы чего-то хотим, либо нет ресурса, либо - времени.",
+                "Пусть у тебя будет всё здесь и сейчас, без откладывания на потом.",
+                "туган көнең белән!"
+            ];
+
+            let index = 0;
+            function showNextMessage() {
+                if (index < messages.length) {
+                    finalText.innerHTML += (index > 0 ? '<br><br>' : '') + messages[index];
+                    finalText.style.opacity = 1;
+                    index++;
+                    setTimeout(showNextMessage, 2000);
+                }
+            }
+            showNextMessage();
+        }
+    </script>
+</body>
+</html>
